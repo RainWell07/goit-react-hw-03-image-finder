@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import Searchbar from '../components/mainComponents/Searchbar';
 import ImageGallery from '../components/mainComponents/ImageGallery';
 import Button from '../components/mainComponents/Button';
@@ -10,17 +9,7 @@ import css from '../components/Modules/ImageFinder.module.css';
 import Notiflix from 'notiflix';
 
 class App extends Component {
-  static propTypes = {
-    images: PropTypes.arrayOf(
-      PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      webformatURL: PropTypes.string.isRequired,
-      largeImageURL: PropTypes.string.isRequired,
-      })
-      ),
-      };
-
-state = {
+  state = {
     query: '',
     page: 1,
     perPage: 12,
@@ -28,67 +17,59 @@ state = {
     isLoading: false,
     showModal: false,
     selectedImage: '',
-    hasNoMoreImages: false,
-    shouldScrollToLoadMoreButton: false,
-    };
-
-  searchbarRef = React.createRef();
-
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeyDown);
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeyDown);
-  }
-
-  handleKeyDown = (event) => {
-    if (event.key === 'Escape') {
-    this.handleCloseModal();
-    }
+    hasMoreImages: false,
   };
 
   handleSearch = (query) => {
     this.setState(
-    { query, page: 1, images: [], hasNoMoreImages: false, shouldScrollToLoadMoreButton: false },
-    this.fetchImages
+      {
+        query,
+        page: 1,
+        images: [],
+        hasMoreImages: false,
+      },
     );
-   };
+  };
 
   handleLoadMore = () => {
     const { query, page, perPage, hasNoMoreImages } = this.state;
 
-    this.setState({ isLoading: true });
-
     if (hasNoMoreImages) {
       return;
     }
+    this.setState({ isLoading: true });
 
-apiHelper
-    .searchImages(query, page + 1, perPage)
-    .then((newImages) => {
-     if (newImages.length > 0) {
-    this.setState(
-     (prevState) => ({
-    images: [...prevState.images, ...newImages],
-    page: prevState.page + 1,
-    isLoading: false,
-    shouldScrollToLoadMoreButton: true,
-    }),
-    () => {window.scrollTo({top: document.documentElement.scrollHeight,behavior: 'smooth',});
-     }
-    );
-    } else {
-        this.setState({ isLoading: false, hasNoMoreImages: true }, () => {
-        Notiflix.Notify.warning('Sorry, There are no more images to load!');
-        });
+    apiHelper
+      .searchImages(query, page + 1, perPage)
+      .then((newImages) => {
+        if (newImages.length > 0) {
+          this.setState(
+          (prevState) => ({
+          images: [...prevState.images, ...newImages],
+          page: prevState.page + 1,
+          isLoading: false,
+          shouldScrollToLoadMoreButton: true,
+          }),
+          () => {
+          const scrollOffset = document.documentElement.scrollHeight - window.innerHeight;
+          window.scrollTo({ top: scrollOffset, behavior: 'smooth' });
+        }
+        );
+        } else {
+          this.setState({ isLoading: false, hasNoMoreImages: true });
         }
       })
       .catch((error) => {
-      console.error(error);
-      this.setState({ isLoading: false });
+        console.error(error);
+        this.setState({ isLoading: false });
       });
-      };
+  };
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.query !== this.state.query) {
+      this.fetchImages();
+    }
+  }
 
   handleImageClick = (imageUrl) => {
     this.setState({ showModal: true, selectedImage: imageUrl });
@@ -105,36 +86,37 @@ apiHelper
     this.setState({ isLoading: true });
 
     apiHelper
-      .searchImages(query, page, perPage)
-      .then((newImages) => {
-        this.setState(
-        (prevState) => ({
-        images: [...prevState.images, ...newImages],
-        isLoading: false,
-        }),
-        () => {
-        if (this.state.images.length === 0) {
-        this.searchbarRef.current.focusInput();
-        Notiflix.Notify.failure('Sorry, nothing was found for your query!');
+    .searchImages(query, page, perPage)
+    .then((newImages) => {
+      if (newImages.length > 0) {
+        const hasMoreImages = newImages.length === perPage;
+        this.setState((prevState) => ({
+          images: [...prevState.images, ...newImages],
+          isLoading: false,
+          hasMoreImages,
+        }));
+      } else {
+        this.setState({ isLoading: false, hasMoreImages: false });
+        if (this.state.page === 1 && this.state.images.length === 0) {
+          Notiflix.Notify.failure('Sorry, nothing was found for your search!');
         }
-        }
-        );
-      })
-      .catch((error) => {
-        console.error(error);
-        this.setState({ isLoading: false });
-      });
-  };
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      this.setState({ isLoading: false });
+    });
+};
 
   render() {
-    const { images, isLoading, showModal, selectedImage, hasNoMoreImages } = this.state;
+    const { images, isLoading, showModal, selectedImage, hasMoreImages } = this.state;
 
-    const showLoadMoreButton = images.length > 0 && !isLoading && !hasNoMoreImages;
+    const showLoadMoreButton = images.length > 0 && !isLoading && hasMoreImages;
 
     return (
       <div className={css.container}>
-        <Searchbar onSearch={this.handleSearch} ref={this.searchbarRef} />
-        <ImageGallery images={images} onImageClick={this.handleImageClick} onLoadMore={this.handleLoadMore} />
+        <Searchbar onSearch={this.handleSearch} />
+        <ImageGallery images={images} onImageClick={this.handleImageClick}/>
         {isLoading && <Loader />}
         {showLoadMoreButton && <Button onClick={this.handleLoadMore}>Load More</Button>}
         {showModal && <Modal imageUrl={selectedImage} onClose={this.handleCloseModal} />}

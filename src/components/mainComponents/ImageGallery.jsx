@@ -8,13 +8,13 @@ const ImageGallery = ({ images, onImageClick }) => {
   return (
     <div>
       <ul className={css.imageColumn}>
-        {images.map((image) => (
-        <ImageGalleryItem
-        key={image.id}
-        imageUrl={image.webformatURL}
-        onClick={() => onImageClick(image.largeImageURL)}
-       />
-        ))}
+      {images.map((image, index) => (
+      <ImageGalleryItem
+      key={`${image.id}_${index}`}
+      imageUrl={image.webformatURL}
+      onClick={() => onImageClick(image.largeImageURL)}
+  />
+))}
     </ul>
     </div>
   );
@@ -23,7 +23,6 @@ const ImageGallery = ({ images, onImageClick }) => {
 ImageGallery.propTypes = {
   images: PropTypes.array.isRequired,
   onImageClick: PropTypes.func.isRequired,
-  onLoadMore: PropTypes.func.isRequired,
 };
 
 export default ImageGallery;

@@ -3,15 +3,11 @@ import css from '../Modules/ImageFinder.module.css'
 
 class Modal extends Component {
   componentDidMount() {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('keydown', this.handleKeyDown);
-    }
+    window.addEventListener('keydown', this.handleKeyDown);
   }
 
   componentWillUnmount() {
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('keydown', this.handleKeyDown);
-    }
+    window.removeEventListener('keydown', this.handleKeyDown);
   }
 
   handleKeyDown = (event) => {
