@@ -44,28 +44,28 @@ class App extends Component {
     }
   }
 
-
   fetchImages = () => {
     const { query, page, perPage } = this.state;
     this.setState({ isLoading: true });
 
     apiHelper
-   .searchImages(query, page, perPage)
-   .then((newImages) => {
-     if (newImages.length > 0) {
-    const hasMoreImages = newImages.length === perPage;
-     this.setState((prevState) => ({ images: [...prevState.images, ...newImages], isLoading: false, hasMoreImages,}));}
-     else {
-     this.setState({ isLoading: false, hasMoreImages: false });
-      if (page === 1 && this.state.images.length === 0) {
-          Notiflix.Notify.failure('Sorry, nothing was found for your search!');}}
+      .searchImages(query, page, perPage)
+      .then((newImages) => {
+        if (newImages.length === 0) {
+          Notiflix.Notify.failure('Sorry, nothing was found for your search!');
+        return;
+        }
+        const hasMoreImages = newImages.length === perPage;
+        this.setState((prevState) => ({ images: [...prevState.images, ...newImages], hasMoreImages,})
+        );
       })
       .catch((error) => {
         console.error(error);
-        this.setState({ isLoading: false });
       })
+      .finally(() => {
+        this.setState({ isLoading: false });
+      });
   };
-
 
   handleImageClick = (imageUrl) => {
     this.setState({ showModal: true, selectedImage: imageUrl });
