@@ -36,39 +36,36 @@ class App extends Component {
     if (prevState.query !== this.state.query || prevState.page !== this.state.page) {
       this.fetchImages();
     }
-  };
+    if (prevState.images !== this.state.images) {
+      if (this.state.page > 1) {
+        const scrollOffset = document.documentElement.scrollHeight - window.innerHeight;
+        window.scrollTo({ top: scrollOffset, behavior: 'smooth' });
+      }
+    }
+  }
+
 
   fetchImages = () => {
     const { query, page, perPage } = this.state;
     this.setState({ isLoading: true });
 
     apiHelper
-      .searchImages(query, page, perPage)
-      .then((newImages) => {
-      if (newImages.length > 0) {
-      const hasMoreImages = newImages.length === perPage;
-      this.setState((prevState) => ({
-      images: [...prevState.images, ...newImages],
-      isLoading: false,
-      hasMoreImages,
-      }), () => {
-      if (page > 1) {
-      const scrollOffset = document.documentElement.scrollHeight - window.innerHeight;
-      window.scrollTo({ top: scrollOffset, behavior: 'smooth' });
-      }
-      });
-    }else {
-      this.setState({ isLoading: false, hasMoreImages: false });
+   .searchImages(query, page, perPage)
+   .then((newImages) => {
+     if (newImages.length > 0) {
+    const hasMoreImages = newImages.length === perPage;
+     this.setState((prevState) => ({ images: [...prevState.images, ...newImages], isLoading: false, hasMoreImages,}));}
+     else {
+     this.setState({ isLoading: false, hasMoreImages: false });
       if (page === 1 && this.state.images.length === 0) {
-      Notiflix.Notify.failure('Sorry, nothing was found for your search!');
-      }
-     }
-    })
-    .catch((error) => {
-    console.error(error);
-    this.setState({ isLoading: false });
-  });
+          Notiflix.Notify.failure('Sorry, nothing was found for your search!');}}
+      })
+      .catch((error) => {
+        console.error(error);
+        this.setState({ isLoading: false });
+      })
   };
+
 
   handleImageClick = (imageUrl) => {
     this.setState({ showModal: true, selectedImage: imageUrl });
