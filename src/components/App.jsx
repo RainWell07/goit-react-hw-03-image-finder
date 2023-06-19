@@ -69,12 +69,10 @@ class App extends Component {
 
   handleImageClick = (imageUrl) => {
     this.setState({ showModal: true, selectedImage: imageUrl });
-    document.body.style.overflow = 'hidden';
   };
 
   handleCloseModal = () => {
     this.setState({ showModal: false, selectedImage: '' });
-    document.body.style.overflow = 'auto';
   };
 
   render() {
